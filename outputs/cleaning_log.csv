@@ -1,0 +1,8 @@
+step,action,rows,reason
+raw,loaded,192544,rows in the raw file
+duplicates,removed,189,exact duplicate row
+duplicates,removed,1,"same user, item, date and text as another review"
+missing,removed,80,rating is missing
+fix,age set missing,378,age under 18 or over 90
+fix,category merged,339,singular/plural names merged (e.g. pant -> pants)
+clean,kept,192274,rows in the clean table
