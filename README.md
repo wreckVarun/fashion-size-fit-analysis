@@ -46,7 +46,7 @@ pip3 install -r requirements.txt && python3 run_all.py
 | 5. Tag reasons (optional) | `scripts/tag_reasons.py` | `outputs/review_reasons*.csv` |
 | 6. Dashboard | `scripts/build_dashboard.py` | `docs/index.html` (published with GitHub Pages) |
 
-**Optional Gemini step.** If `GEMINI_API_KEY` is set (a free key from Google AI Studio), step 5 sends a fixed random sample of 500 misfit reviews to Gemini in batches of 25 and gets back JSON that must match a schema: one reason per review out of *too tight, too long, sizing inconsistent, fabric, other*. Without a key the step prints a message and is skipped. The published results were produced without it.
+**Optional Gemini step.** If `GEMINI_API_KEY` is set (a free key from Google AI Studio), step 5 sends a fixed random sample of 500 misfit reviews to Gemini in batches of 25 and gets back JSON that must match a schema: one reason per review out of *too tight, too long, sizing inconsistent, fabric, other*. Without a key the step prints a message and is skipped. The published results in `outputs/review_reasons*.csv` were produced with `gemini-flash-lite-latest` (the default; set `GEMINI_MODEL` to use another).
 
 ```bash
 export GEMINI_API_KEY=your-key
@@ -87,7 +87,14 @@ Small sizes mostly run large (size 1: 18.2% large vs 5.4% small) and large sizes
 **5. Misfits cost ratings.**
 71.0% of "fit" reviews give 5 stars, against 48.9% of "large" and 45.4% of "small" reviews. The average falls from 4.65 to 4.28 (large) and 4.21 (small) stars, and 17.2% of "small" reviews give 3 stars or less vs 4.4% of "fit" reviews. *(06)*
 
-**Recommendation:** add a "Runs small – consider sizing up" / "Runs large – consider sizing down" tag to the 509 flagged items, plus a size-aware note showing what buyers of the shopper's size reported. Details, metrics and an A/B test design are in the [product memo](docs/product_memo.md).
+### Why customers say it did not fit (Gemini reason tags)
+
+**Most "too small" complaints are about a tight fit, and 1 in 5 tagged misfits says the size label was off. Fabric is rarely the cause.**
+Gemini tagged a random sample of 500 misfit reviews and returned a reason for 491. Overall: too tight 27.9%, sizing inconsistent 21.6%, too long 15.5%, fabric 3.1%, other 32.0%. Among "small" reviews, 52.7% are "too tight"; among "large" reviews, 53.6% are "other", because the reason list has no "too loose" bucket and loose or big complaints were put there. "Sizing inconsistent" (the label did not match the shopper's usual size) is 19.5% of "small" and 23.6% of "large" reviews, which is the gap a size suggestion is meant to close. *(scripts/tag_reasons.py, outputs/review_reasons_summary.csv)*
+
+### Recommendation
+
+Add a "Runs small – consider sizing up" / "Runs large – consider sizing down" tag to the 509 flagged items, plus a size-aware note showing what buyers of the shopper's size reported. Details, metrics and an A/B test design are in the [product memo](docs/product_memo.md).
 
 ## Limitations
 
@@ -98,7 +105,7 @@ Small sizes mostly run large (size 1: 18.2% large vs 5.4% small) and large sizes
 - **Who writes reviews.** Unhappy customers may be more likely to review, which can inflate misfit rates.
 - **Thresholds are judgement calls.** 30 reviews, 25% and 2-to-1 were chosen to flag clear cases; other values flag more or fewer items.
 - **Old data.** Reviews run from November 2010 to January 2018.
-- **Gemini tags not included.** The reason-tagging step needs an API key and was not run for the published results.
+- **Reason tags are machine labels on a sample.** Gemini labelled 491 of 500 sampled reviews, and the sample is only 1.0% of the 50,428 misfit reviews. Spot checks show some wrong labels (e.g. a "too tight" review tagged "too long"), and the five reasons have no "too loose" option, so loose fits land in "other".
 
 ## Project structure
 
