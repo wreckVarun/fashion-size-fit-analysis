@@ -24,7 +24,8 @@ OUT_DIR = os.path.join(ROOT, "outputs")
 TAGS_PATH = os.path.join(OUT_DIR, "review_reasons.csv")
 SUMMARY_PATH = os.path.join(OUT_DIR, "review_reasons_summary.csv")
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
+# The "lite" model is fast and free, and is enough for picking one of five labels.
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
 SAMPLE_SIZE = 500
 BATCH_SIZE = 25          # reviews per request: 500 / 25 = 20 requests
 PAUSE_SECONDS = 7        # stay under the free tier's requests-per-minute limit
@@ -103,12 +104,15 @@ def main():
 
     for start in range(0, len(sample), BATCH_SIZE):
         batch = sample.iloc[start:start + BATCH_SIZE]
-        try:
-            tags += tag_batch(client, types, batch)
-        except Exception as error:  # e.g. rate limit: wait, then try once more
-            print("  request failed, retrying in 60s:", error)
-            time.sleep(60)
-            tags += tag_batch(client, types, batch)
+        for attempt in range(1, 4):  # try each batch up to 3 times
+            try:
+                tags += tag_batch(client, types, batch)
+                break
+            except Exception as error:  # e.g. rate limit or busy model
+                if attempt == 3:
+                    raise
+                print(f"  request failed ({error}), waiting 60s before retry {attempt + 1}")
+                time.sleep(60)
         print(f"  tagged {min(start + BATCH_SIZE, len(sample))}/{len(sample)}")
         time.sleep(PAUSE_SECONDS)
 
